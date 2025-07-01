@@ -1,7 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header
 
-
 class DromadaireApp(App):
     """A Textual app to manage stopwatches."""
 
@@ -19,6 +18,11 @@ class DromadaireApp(App):
         )
 
 
-if __name__ == "__main__":
+def main():
+    """Entry point for the application."""
     app = DromadaireApp()
     app.run()
+
+
+if __name__ == "__main__":
+    main()
