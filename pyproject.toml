@@ -1,0 +1,11 @@
+[project]
+name = "dromadaire"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "ruff>=0.12.1",
+    "textual>=3.5.0",
+    "textual-dev>=1.7.0",
+]
