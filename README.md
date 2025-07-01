@@ -1,8 +1,15 @@
-# Local dev
+
+
+# Dromadaire
+
+![Dromadaire](dromadaire.png)
+
+## Local dev
 
 ```bash
 uv pip install -e .
 uv run app
+uv run ruff check
 ```
 
 ## Running app remotely
