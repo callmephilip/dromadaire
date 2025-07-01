@@ -1,8 +1,11 @@
 
+<div style="text-align:center;">
+  <img src="dromadaire.png" width="300"/>
+</div>
+
+---
 
 # Dromadaire
-
-![Dromadaire](dromadaire.png)
 
 ## Local dev
 
