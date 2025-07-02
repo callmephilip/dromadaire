@@ -11,7 +11,7 @@ class DromadaireApp(App):
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
-        logo_pixels = Pixels.from_image_path("dromadaire.png", resize=(20, 20))
+        logo_pixels = Pixels.from_image_path("assets/dromadaire.png", resize=(20, 20))
         yield Static(logo_pixels, id="logo")
         yield Header()
         yield Footer()
@@ -21,13 +21,3 @@ class DromadaireApp(App):
         self.theme = (
             "textual-dark" if self.theme == "textual-light" else "textual-light"
         )
-
-
-def main():
-    """Entry point for the application."""
-    app = DromadaireApp()
-    app.run()
-
-
-if __name__ == "__main__":
-    main()
