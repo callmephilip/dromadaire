@@ -27,3 +27,8 @@ Use claude in yolo mode with
 ```bash
 uvx --with git+https://github.com/callmephilip/dromadaire app
 ```
+
+## Inspiration
+
+- https://github.com/charles-001/dolphie
+- https://github.com/tconbeer/harlequin
