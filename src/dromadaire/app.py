@@ -1,7 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Static
 from rich_pixels import Pixels
-from rich.console import Console
 from .topbar import TopBar
 
 class DromadaireApp(App):

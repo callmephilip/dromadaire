@@ -8,3 +8,4 @@
 - inspect requirements carefully and come up with the plan
 - proceed with the execution
 - when necessary, rerun the app, take a screenshot, inspect it and decide if any additional changes are required
+- after making changes to the code, run checks and clean things up in necessary using `uv run ruff check`

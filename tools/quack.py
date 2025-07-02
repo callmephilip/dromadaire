@@ -2,7 +2,9 @@
 """
 Quack tool - plays the quack.mp3 sound file
 """
-import os, sys, subprocess
+import os
+import sys
+import subprocess
 from pathlib import Path
 
 def play_quack():
