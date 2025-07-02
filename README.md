@@ -22,6 +22,14 @@ Use claude in yolo mode with
 ./claude
 ```
 
+## Testing
+
+Update snapshot
+
+```
+pytest --snapshot-update
+```
+
 ## Running app remotely
 
 ```bash
