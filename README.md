@@ -1,11 +1,12 @@
-
-<div style="text-align:center;">
-  <img src="dromadaire.png" width="300"/>
+<div align="center">
+  <a href="https://bsky.app/profile/callmephilip.com/post/3lsxyhrsyac2h">
+    <img src="dromadaire.png" alt="Dromadaire" width="100" />
+  </a>
 </div>
 
----
+<h1 align="center">Dromadaire</h1>
 
-# Dromadaire
+1 hump is better than 2
 
 ## Local dev
 
