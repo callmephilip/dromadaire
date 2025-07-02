@@ -1,0 +1,65 @@
+/* Dromadaire App Styles - Inspired by Dolphie */
+
+/* Top Bar Styles */
+#top-bar {
+    dock: top;
+    height: 1;
+    background: #192036;
+    color: #bbc8e8;
+}
+
+#app-title {
+    width: 15%;
+    text-align: left;
+    color: #ffffff;
+    text-style: bold;
+    padding: 0 1;
+}
+
+#status-text {
+    width: 70%;
+    text-align: center;
+    color: #bbc8e8;
+    text-style: bold;
+}
+
+#version-text {
+    width: 15%;
+    text-align: right;
+    color: #8892b0;
+    padding: 0 1;
+    text-overflow: ellipsis;
+}
+
+/* Logo styles */
+#logo {
+    content-align: center middle;
+    background: #0a0e1b;
+}
+
+/* Dark theme adjustments */
+.textual-dark {
+    background: #0a0e1b;
+}
+
+/* Light theme adjustments */
+.textual-light #top-bar {
+    background: #e2e8f0;
+    color: #2d3748;
+}
+
+.textual-light #app-title {
+    color: #1a202c;
+}
+
+.textual-light #status-text {
+    color: #2d3748;
+}
+
+.textual-light #help-text {
+    color: #718096;
+}
+
+.textual-light #logo {
+    background: #f7fafc;
+}
