@@ -15,6 +15,12 @@ uv run app
 uv run ruff check
 ```
 
+Use claude in yolo mode with
+
+```
+./claude
+```
+
 ## Running app remotely
 
 ```bash
