@@ -12,3 +12,6 @@ wheels/
 
 # playwright output
 playwright/
+
+# snapshot reports
+snapshot_report.html
