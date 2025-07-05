@@ -17,6 +17,7 @@ dependencies = [
     "pytest-asyncio>=0.21.0",
     "pytest-textual-snapshot>=1.0.0",
     "python-dotenv>=1.1.1",
+    "sugar",
 ]
 
 [project.scripts]
@@ -36,3 +37,6 @@ exclude = ["kb"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--ignore=kb"
+
+[tool.uv.sources]
+sugar = { git = "https://github.com/velodrome-finance/sugar-sdk.git", rev = "superswaps" }
