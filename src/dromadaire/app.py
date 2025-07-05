@@ -114,13 +114,11 @@ class DromadaireApp(App):
     
     def action_show_chain_selection(self) -> None:
         """Show the chain selection modal."""
-        def handle_chain_selection(selected_chains):
-            self.selected_chains = [(chain_id, chain_name) for chain_id, chain_name in self.state.supported_chains if chain_id in selected_chains]
+        def handle_chain_selection(selected_chains): self.selected_chains = self.state.select_chains(selected_chains)
         self.push_screen(ChainSelectionScreen(selected_chains=self.selected_chains, supported_chains=self.state.supported_chains), handle_chain_selection)
     
     def watch_selected_chains(self, chains: List[Tuple[str, str]]) -> None:
         """Called when selected_chains changes"""
         # Sync with app state
-        self.state.selected_chains = chains
         if chains: self.notify(f"Selected chains: {', '.join([chain_name for _, chain_name in chains])}")
         else: self.notify("No chains selected")
