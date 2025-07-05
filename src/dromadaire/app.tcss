@@ -26,9 +26,10 @@ AppHeader {
     background: $surface;
     border: solid $primary;
     width: 60%;
-    height: 70%;
-    margin: 2;
-    padding: 2;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    content-align: center middle;
 }
 
 #chain-selection-title {
@@ -43,6 +44,7 @@ AppHeader {
     text-align: center;
     color: $text-muted;
     margin-top: 1;
+    width: 100%;
 }
 
 .hidden {
