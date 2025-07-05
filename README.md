@@ -8,6 +8,8 @@
 
 1 hump is better than 2
 
+![Dromadaire Demo](dromadaire.gif)
+
 ## Local dev
 
 ```bash
@@ -35,6 +37,8 @@ pytest --snapshot-update
 ```bash
 uvx --with git+https://github.com/callmephilip/dromadaire app
 ```
+
+recommended [env settings](https://github.com/velodrome-finance/sugar-sdk/blob/superswaps/.env.example)
 
 ## Inspiration
 
