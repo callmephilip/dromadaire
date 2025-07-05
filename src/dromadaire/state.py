@@ -23,4 +23,10 @@ class AppState:
     
     def __init__(self):
         self.selected_chains: List[Tuple[str, str]] = self.default_chains.copy()
-        
+
+
+def state() -> 'AppState':
+    """Get the singleton instance of AppState"""
+    if not hasattr(state, "_instance"):
+        state._instance = AppState()
+    return state._instance

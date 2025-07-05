@@ -5,7 +5,7 @@ from textual.containers import Horizontal, Container
 from textual.screen import ModalScreen
 from textual.reactive import reactive
 from typing import List, Tuple
-from .state import AppState
+from .state import state, AppState
 
 # Load environment variables from .env file
 load_dotenv()
@@ -67,12 +67,9 @@ class ChainSelectionScreen(ModalScreen):
         self.selected, self.all = selected_chains, supported_chains
 
     def compose(self) -> ComposeResult:
-        currently_selected_ids = [chain_id for chain_id, _ in self.selected]
         with Container(id="chain-selection-modal"):
             yield Label("Select Chains", id="chain-selection-title")
-            yield SelectionList[str](
-                *[(name, id, id in currently_selected_ids) for id, name in self.all],
-            )
+            yield SelectionList[str](*[(name, id, id in [chain_id for chain_id, _ in self.selected]) for id, name in self.all])
             yield Label("Press Enter to confirm, Escape to cancel", id="chain-selection-help")
     
     def on_key(self, event) -> None:
@@ -100,7 +97,7 @@ class DromadaireApp(App):
 
     def __init__(self):
         super().__init__()
-        self.state = AppState()
+        self.state = state()
         # Set default selected chains
         self.selected_chains = self.state.default_chains.copy()
 
@@ -118,28 +115,12 @@ class DromadaireApp(App):
     def action_show_chain_selection(self) -> None:
         """Show the chain selection modal."""
         def handle_chain_selection(selected_chains):
-            if selected_chains:
-                # Convert selected chain IDs to tuples with names
-                chains_data = self.state.supported_chains
-                selected_tuples = [(chain_id, chain_name) for chain_id, chain_name in chains_data if chain_id in selected_chains]
-                
-                # Update both reactive state and app state
-                self.selected_chains = selected_tuples
-                self.state.selected_chains = selected_tuples
-                # Get chain names for notification
-                chain_names = [chain_name for _, chain_name in selected_tuples]
-                self.notify(f"Selected chains: {', '.join(chain_names)}")
-            else:
-                self.selected_chains = []
-                self.state.selected_chains = []
-                self.notify("No chains selected")
-        
+            self.selected_chains = [(chain_id, chain_name) for chain_id, chain_name in self.state.supported_chains if chain_id in selected_chains]
         self.push_screen(ChainSelectionScreen(selected_chains=self.selected_chains, supported_chains=self.state.supported_chains), handle_chain_selection)
     
     def watch_selected_chains(self, chains: List[Tuple[str, str]]) -> None:
         """Called when selected_chains changes"""
         # Sync with app state
         self.state.selected_chains = chains
-        # Update any UI components that depend on selected chains
-        #self.refresh_trading_data()
-    
+        if chains: self.notify(f"Selected chains: {', '.join([chain_name for _, chain_name in chains])}")
+        else: self.notify("No chains selected")
