@@ -58,7 +58,7 @@ TradingInterface {
 }
 
 /* Deposit Form Panel */
-#deposit-form-panel {
+#pool-details-view {
     width: 40%;
     background: $surface;
     padding: 1;
@@ -82,46 +82,12 @@ TradingInterface {
     margin-bottom: 1;
 }
 
-#low-price, #high-price, #sol-amount, #xsol-amount {
-    margin-bottom: 1;
-}
-
-#change-pool-btn {
-    margin-top: 1;
-    margin-bottom: 1;
-    background: $surface;
-    border: tall $border;
-}
-
-#deposit-btn {
-    margin-top: 1;
-    background: $success;
-    color: $text;
-    text-style: bold;
-}
-
-/* Navigation Tabs */
-NavigationTabs {
-    dock: bottom;
-    height: 3;
-    background: $surface;
-    border-top: tall $border;
-    layout: horizontal;
-    padding: 1;
-}
-
-#chains-tab, #search-tab, #swap-tab {
-    width: 1fr;
-    margin: 0 1;
-    background: $surface;
-    border: tall $border;
-}
 
 /* Footer */
 Footer {
     dock: bottom;
     height: 1;
-    background: $primary;
+    /*background: $primary;*/
 }
 
 /* Dark theme adjustments */
@@ -132,13 +98,4 @@ Footer {
 /* Light theme adjustments */
 .textual-light {
     background: $background;
-}
-
-/* Spinner Widget Styles */
-SpinnerWidget {
-    color: $accent;
-}
-
-.textual-light SpinnerWidget {
-    color: $accent;
 }

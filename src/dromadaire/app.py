@@ -40,42 +40,20 @@ class TradingPairsList(Container):
         
 
 
-class DepositForm(Container):
+class PoolDetailsView(Container):
     """Right sidebar with deposit/trading form"""
     def __init__(self):
-        super().__init__(id="deposit-form-panel")
+        super().__init__(id="pool-details-view")
     
     def compose(self) -> ComposeResult:
-        yield Label("New deposit", id="deposit-title")
-        yield Label("SolMTC / xSolMTC", id="selected-pair")
-        yield Label("Set price range", id="price-range-label")
-        yield Input(placeholder="1.0061201200560181B", id="low-price")
-        yield Input(placeholder="1.0019017109693875", id="high-price")
-        yield Label("Set deposit amount", id="deposit-amount-label")
-        yield Input(placeholder="0", id="sol-amount")
-        yield Input(placeholder="0", id="xsol-amount")
-        yield Button("Change pool", id="change-pool-btn")
-        yield Button("Deposit", id="deposit-btn")
-
+        yield Label("Pool details")
 
 class TradingInterface(Container):
     """Main trading interface layout"""
     def compose(self) -> ComposeResult:
         with Horizontal(id="main-trading-area"):
             yield TradingPairsList()
-            yield DepositForm()
-
-
-class NavigationTabs(Container):
-    """Bottom navigation tabs"""
-    def __init__(self):
-        super().__init__(id="nav-tabs")
-    
-    def compose(self) -> ComposeResult:
-        yield Button("Chains", id="chains-tab")
-        yield Button("Search", id="search-tab") 
-        yield Button("Swap", id="swap-tab")
-
+            yield PoolDetailsView()
 
 class DromadaireApp(App):
     """Main trading application"""
@@ -91,7 +69,6 @@ class DromadaireApp(App):
     def compose(self) -> ComposeResult:
         yield AppHeader()
         yield TradingInterface()
-        yield NavigationTabs()
         yield Footer()
     
     def action_toggle_dark(self) -> None:
@@ -99,33 +76,3 @@ class DromadaireApp(App):
         self.theme = (
             "textual-dark" if self.theme == "textual-light" else "textual-light"
         )
-# class DromadaireApp(App):
-#     """A Textual app to manage stopwatches."""
-
-#     BINDINGS = [
-#         ("d", "toggle_dark", "Toggle dark mode"),
-#         ("s", "toggle_spinner", "Toggle spinner"),
-#     ]
-#     TITLE = "Dromadaire"
-#     CSS_PATH = "app.tcss"
-
-#     def compose(self) -> ComposeResult:
-#         """Create child widgets for the app."""
-#         yield TopBar()
-#         with Vertical(id="main"):
-#             yield SpinnerWidget("dots", "Loading camel data...", id="demo-spinner")
-#         yield Footer()
-
-#     def action_toggle_dark(self) -> None:
-#         """An action to toggle dark mode."""
-#         self.theme = (
-#             "textual-dark" if self.theme == "textual-light" else "textual-light"
-#         )
-
-#     def action_toggle_spinner(self) -> None:
-#         """An action to toggle the spinner visibility."""
-#         spinner = self.query_one("#demo-spinner", SpinnerWidget)
-#         if spinner.display:
-#             spinner.hide_spinner()
-#         else:
-#             spinner.show_spinner()
