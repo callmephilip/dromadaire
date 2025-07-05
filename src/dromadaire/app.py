@@ -5,7 +5,7 @@ from textual.containers import Horizontal, Container
 from textual.screen import ModalScreen
 from textual.reactive import reactive
 from typing import List, Tuple
-from .state import state, AppState
+from .state import state
 
 # Load environment variables from .env file
 load_dotenv()
@@ -120,5 +120,7 @@ class DromadaireApp(App):
     def watch_selected_chains(self, chains: List[Tuple[str, str]]) -> None:
         """Called when selected_chains changes"""
         # Sync with app state
-        if chains: self.notify(f"Selected chains: {', '.join([chain_name for _, chain_name in chains])}")
-        else: self.notify("No chains selected")
+        if chains:
+            self.notify(f"Selected chains: {', '.join([chain_name for _, chain_name in chains])}")
+        else:
+            self.notify("No chains selected")
