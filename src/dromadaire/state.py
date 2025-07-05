@@ -1,5 +1,4 @@
-from typing import List, Dict, Any, Optional, Tuple
-from dataclasses import dataclass
+from typing import List, Tuple
     
 class AppState:
     """Centralized state management for Dromadaire"""

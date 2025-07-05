@@ -4,7 +4,7 @@ from textual.widgets import Footer, Static, Label, ListView, ListItem, Selection
 from textual.containers import Horizontal, Container
 from textual.screen import ModalScreen
 from textual.reactive import reactive
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 from .state import AppState
 
 # Load environment variables from .env file
