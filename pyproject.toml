@@ -31,3 +31,7 @@ dev = [
 
 [tool.ruff]
 exclude = ["kb"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--ignore=kb"
