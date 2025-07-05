@@ -1,8 +1,8 @@
 from dotenv import load_dotenv
 from textual import work
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Static, Label, DataTable, SelectionList
-from textual.containers import Horizontal, Container
+from textual.widgets import Footer, Static, Label, DataTable, SelectionList, Input
+from textual.containers import Horizontal, Container, Vertical
 from textual.screen import ModalScreen
 from textual.reactive import reactive
 from typing import List, Tuple
@@ -26,14 +26,78 @@ class Pools(Container):
 
     def __init__(self):
         super().__init__(id="trading-pairs-panel")
+        self.search_visible = False
+        self.all_pools = []
     
     def compose(self) -> ComposeResult:
-        yield DataTable(id="pools-table")
+        with Vertical():
+            yield Input(placeholder="Search pools...", id="pools-search", classes="hidden")
+            yield DataTable(id="pools-table")
     
     def on_mount(self) -> None:
         table = self.query_one("#pools-table", DataTable)
         table.add_columns("Pool", "TVL", "APR")
         table.loading = True
+    
+    
+    def toggle_search(self) -> None:
+        """Toggle search bar visibility"""
+        search_input = self.query_one("#pools-search", Input)
+        if self.search_visible:
+            search_input.add_class("hidden")
+            self.search_visible = False
+            # Clear search and show all pools
+            search_input.value = ""
+            self.update_table_with_pools(self.all_pools)
+            # Focus back to table
+            self.query_one("#pools-table", DataTable).focus()
+        else:
+            search_input.remove_class("hidden")
+            self.search_visible = True
+            search_input.focus()
+    
+    def on_input_changed(self, event) -> None:
+        """Handle search input changes"""
+        if event.input.id == "pools-search":
+            query = event.value
+            if query:
+                app_state = self.app.state
+                filtered_pools = app_state.filter_pools(self.all_pools, query)
+                self.update_table_with_pools(filtered_pools)
+            else:
+                self.update_table_with_pools(self.all_pools)
+    
+    def on_key(self, event) -> None:
+        """Handle key events"""
+        if event.key == "escape" and self.search_visible:
+            # Clear search and exit search mode
+            self.toggle_search()
+            event.stop()
+    
+    def update_table_with_pools(self, pools) -> None:
+        """Update DataTable with given pools"""
+        table = self.query_one("#pools-table", DataTable)
+        table.clear()
+        
+        for pool in pools:
+            # Extract pool information
+            chain_name = pool.chain_name
+            token_a = pool.token0.symbol if pool.token0 else 'N/A'
+            token_b = pool.token1.symbol if pool.token1 else 'N/A'
+            
+            # Calculate TVL from reserves
+            tvl = 0
+            if pool.reserve0 and pool.reserve1:
+                try:
+                    tvl = float(pool.reserve0.amount) + float(pool.reserve1.amount)
+                except (ValueError, AttributeError):
+                    tvl = 0
+
+            table.add_row(
+                f"[{chain_name}] {token_a} / {token_b}",
+                f"${tvl:,.2f}" if tvl > 0 else "N/A",
+                f"{pool.pool_fee:.2f}%" if pool.pool_fee else "N/A"
+            )
     
     @work(exclusive=True)
     async def load_pool_data(self) -> None:
@@ -45,26 +109,9 @@ class Pools(Container):
 
             app_state = self.app.state
             pools = await app_state.load_pools()
+            self.all_pools = pools  # Store all pools for filtering
 
-            for pool in pools:
-                # Extract pool information
-                chain_name = pool.chain_name
-                token_a = pool.token0.symbol if pool.token0 else 'N/A'
-                token_b = pool.token1.symbol if pool.token1 else 'N/A'
-                
-                # Calculate TVL from reserves
-                tvl = 0
-                if pool.reserve0 and pool.reserve1:
-                    try:
-                        tvl = float(pool.reserve0.amount) + float(pool.reserve1.amount)
-                    except (ValueError, AttributeError):
-                        tvl = 0
-
-                table.add_row(
-                    f"[{chain_name}] {token_a} / {token_b}",
-                    f"${tvl:,.2f}" if tvl > 0 else "N/A",
-                    f"{pool.pool_fee:.2f}%" if pool.pool_fee else "N/A"
-                )
+            self.update_table_with_pools(pools)
         except Exception as e:
             self.show_error(str(e))
         finally:
@@ -118,6 +165,7 @@ class DromadaireApp(App):
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
         ("c", "show_chain_selection", "Select chains"),
+        ("s", "toggle_search", "Toggle search"),
         ("q", "quit", "Quit"),
     ]
     
@@ -149,6 +197,11 @@ class DromadaireApp(App):
         """Show the chain selection modal."""
         def handle_chain_selection(selected_chains): self.selected_chains = self.state.select_chains(selected_chains)
         self.push_screen(ChainSelectionScreen(selected_chains=self.selected_chains, supported_chains=self.state.supported_chains), handle_chain_selection)
+    
+    def action_toggle_search(self) -> None:
+        """Toggle search bar visibility in pools."""
+        pools_widget = self.query_one(Pools)
+        pools_widget.toggle_search()
     
     async def watch_selected_chains(self, chains: List[Tuple[str, str]]) -> None:
         """Called when selected_chains changes"""

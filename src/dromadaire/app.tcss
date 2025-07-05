@@ -44,3 +44,11 @@ AppHeader {
     color: $text-muted;
     margin-top: 1;
 }
+
+.hidden {
+    display: none;
+}
+
+#pools-search {
+    margin-bottom: 1;
+}

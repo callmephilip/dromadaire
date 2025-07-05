@@ -1,7 +1,7 @@
-import asyncio
 from typing import List, Tuple
 from sugar import get_async_chain
 from sugar.pool import LiquidityPool
+from sugar.helpers import normalize_address
 
 class AppState:
     """Centralized state management for Dromadaire"""
@@ -61,6 +61,73 @@ class AppState:
                 pools = await chain.get_pools()
                 all_pools.extend(pools)
         return all_pools
+    
+    def filter_pools(self, pools: List[LiquidityPool], query: str) -> List[LiquidityPool]:
+        if not query or not query.strip():
+            return pools
+        
+        query = query.strip().lower()
+        try:
+            normalized_query = normalize_address(query) if query.startswith('0x') else None
+        except Exception:
+            normalized_query = None
+        
+        filtered_pools = []
+        
+        for pool in pools:
+            # Check for exact matches on pool address (if pool has address/lp attribute)
+            if hasattr(pool, 'address') and normalized_query:
+                if normalize_address(pool.address).lower() == normalized_query.lower():
+                    filtered_pools.append(pool)
+                    continue
+            elif hasattr(pool, 'lp') and normalized_query:
+                if normalize_address(pool.lp).lower() == normalized_query.lower():
+                    filtered_pools.append(pool)
+                    continue
+            
+            # Check for exact matches on pool name (if pool has name attribute)
+            if hasattr(pool, 'name') and pool.name:
+                if query == pool.name.lower():
+                    filtered_pools.append(pool)
+                    continue
+            
+            # Check token addresses
+            if normalized_query:
+                token0_addr = getattr(pool.token0, 'address', None)
+                token1_addr = getattr(pool.token1, 'address', None)
+                
+                if token0_addr and normalize_address(token0_addr).lower() == normalized_query.lower():
+                    filtered_pools.append(pool)
+                    continue
+                elif token1_addr and normalize_address(token1_addr).lower() == normalized_query.lower():
+                    filtered_pools.append(pool)
+                    continue
+            
+            # Fuzzy match on token names/symbols
+            token0_symbol = getattr(pool.token0, 'symbol', '').lower()
+            token1_symbol = getattr(pool.token1, 'symbol', '').lower()
+            token0_name = getattr(pool.token0, 'name', '').lower()
+            token1_name = getattr(pool.token1, 'name', '').lower()
+            
+            if (query in token0_symbol or query in token1_symbol or 
+                query in token0_name or query in token1_name):
+                filtered_pools.append(pool)
+                continue
+            
+            # Fuzzy match on chain name
+            chain_name = getattr(pool, 'chain_name', '').lower()
+            if query in chain_name:
+                filtered_pools.append(pool)
+                continue
+            
+            # Fuzzy match on pool name (if exists)
+            if hasattr(pool, 'name') and pool.name:
+                if query in pool.name.lower():
+                    filtered_pools.append(pool)
+                    continue
+        
+        return filtered_pools
+        
 
 
 def state() -> 'AppState':
