@@ -28,3 +28,6 @@ packages = ["src/dromadaire"]
 dev = [
     "gitingest>=0.1.5",
 ]
+
+[tool.ruff]
+exclude = ["kb"]

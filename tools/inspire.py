@@ -36,7 +36,8 @@ def main():
         print("Usage: python tools/inspire.py \"your question here\"")
         sys.exit(1)
     
-    if "GEMINI_API_KEY" not in os.environ: raise ValueError("GEMINI_API_KEY environment variable is not set.")
+    if "GEMINI_API_KEY" not in os.environ:
+        raise ValueError("GEMINI_API_KEY environment variable is not set.")
     
     question = sys.argv[1]
     
