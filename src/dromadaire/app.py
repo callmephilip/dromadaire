@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from textual import work
+from textual import work, on
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Static, Label, DataTable, SelectionList, Input
 from .widgets import AddressWidget
@@ -18,7 +18,7 @@ class AppHeader(Container):
         super().__init__(id="app-header")
     
     def compose(self) -> ComposeResult:
-        yield Static("🐪 DROMADAIRE", id="app-name")
+        yield Static(" 🐪 dromadaire", id="app-name")
         yield Static("v 0.1.0", id="app-version")
 
 
@@ -37,6 +37,7 @@ class Pools(Container):
     
     def on_mount(self) -> None:
         table = self.query_one("#pools-table", DataTable)
+        table.cursor_type = "row"
         table.add_columns("Pool", "TVL", "APR", "LP Address")
         table.loading = True
     
@@ -102,7 +103,8 @@ class Pools(Container):
                 f"[{chain_name}] {token_a} / {token_b}",
                 f"${tvl:,.2f}" if tvl > 0 else "N/A",
                 f"{pool.pool_fee:.2f}%" if pool.pool_fee else "N/A",
-                formatted_lp
+                formatted_lp,
+                key=pool.lp  # Use pool LP address as row key for easy lookup
             )
     
     @work(exclusive=True)
@@ -128,15 +130,80 @@ class Pools(Container):
     def show_error(self, error: str) -> None:
         """Show error message"""
         self.app.notify(f"Error loading pools: {error}")
+    
+    def get_pool_by_lp_address(self, lp_address: str):
+        """Get pool object by LP address"""
+        for pool in self.all_pools:
+            if pool.lp == lp_address:
+                return pool
+        return None
+   
+    @on(DataTable.RowHighlighted)
+    def on_pool_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        """Handle pool highlighting (arrow key navigation) to show details"""
+        if event.data_table.id != "pools-table":
+            return  # Only handle our pools table
+        
+        # Get the highlighted pool using the row key (which is the LP address)
+        highlighted_pool = self.get_pool_by_lp_address(event.row_key)
+        
+        if highlighted_pool:
+            # Get the pool details view and update it
+            pool_details = self.parent.query_one(PoolDetailsView)
+            pool_details.update_pool_details(highlighted_pool)
         
 
 class PoolDetailsView(Container):
     """Right sidebar with deposit/trading form"""
     def __init__(self):
         super().__init__(id="pool-details-view")
+        self.current_pool = None
     
     def compose(self) -> ComposeResult:
-        yield Label("Pool details")
+        with Vertical():
+            yield Label("", id="pool-details-content")
+    
+    def update_pool_details(self, pool) -> None:
+        """Update the pool details view with selected pool information"""
+        self.current_pool = pool
+        
+        # Format pool information
+        chain_name = pool.chain_name
+        token_a = pool.token0.symbol if pool.token0 else 'N/A'
+        token_b = pool.token1.symbol if pool.token1 else 'N/A'
+        
+        # Calculate TVL
+        tvl = 0
+        if pool.reserve0 and pool.reserve1:
+            try:
+                tvl = pool.tvl if hasattr(pool, 'tvl') else (float(pool.reserve0.amount) + float(pool.reserve1.amount))
+            except (ValueError, AttributeError):
+                tvl = 0
+        
+        # Format details text
+        details_text = f"""🏊 {token_a} / {token_b}
+📍 Chain: {chain_name}
+💰 TVL: ${tvl:,.2f}
+📊 Pool Fee: {pool.pool_fee:.2f}%
+🏭 Type: {'Stable' if pool.is_stable else 'Volatile'}
+📍 LP Address: {AddressWidget().format_address(pool.lp)}
+
+💎 Token Details:
+{token_a}: {AddressWidget().format_address(pool.token0.token_address)}...
+{token_b}: {AddressWidget().format_address(pool.token1.token_address)}...
+
+📈 Reserves:
+{token_a}: {pool.reserve0.amount:,.2f}
+{token_b}: {pool.reserve1.amount:,.2f}
+
+🎯 Pool Info:
+Factory: {pool.factory[:10]}...
+Total Supply: {pool.total_supply:,.2f}
+Decimals: {pool.decimals}"""
+        
+        # Update the content label
+        content_label = self.query_one("#pool-details-content", Label)
+        content_label.update(details_text)
 
 class TradingInterface(Container):
     """Main trading interface layout"""
@@ -151,9 +218,11 @@ class ChainSelectionScreen(ModalScreen):
         super().__init__()
         self.selected, self.all = selected_chains, supported_chains
 
+    def on_mount(self) -> None:
+        self.query_one(SelectionList).border_title = "Pick your chains"
+
     def compose(self) -> ComposeResult:
         with Container(id="chain-selection-modal"):
-            yield Label("Select Chains", id="chain-selection-title")
             yield SelectionList[str](*[(name, id, id in [chain_id for chain_id, _ in self.selected]) for id, name in self.all])
             yield Label("Press Enter to confirm, Escape to cancel", id="chain-selection-help")
     

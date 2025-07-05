@@ -108,6 +108,11 @@ def test_app_snapshot(mock_load_pools, snap_compare):
     assert snap_compare(DromadaireApp(), terminal_size=(80, 24))
 
 @patch('dromadaire.state.AppState.load_pools', new_callable=AsyncMock)
+def test_pools_navigate(mock_load_pools, snap_compare):
+    mock_load_pools.return_value = create_mock_pools()
+    assert snap_compare(DromadaireApp(), press=["arrow_down"])
+
+@patch('dromadaire.state.AppState.load_pools', new_callable=AsyncMock)
 def test_chain_selection_snapshot(mock_load_pools, snap_compare):
     """Test the chain selection modal matches the expected snapshot."""
     mock_load_pools.return_value = create_mock_pools()
