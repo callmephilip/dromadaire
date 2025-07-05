@@ -1,7 +1,8 @@
 from dotenv import load_dotenv
+from textual import work
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Static, Label, ListView, ListItem, SelectionList
-from textual.containers import Horizontal, Container
+from textual.widgets import Footer, Static, Label, DataTable, SelectionList, Input
+from textual.containers import Horizontal, Container, Vertical
 from textual.screen import ModalScreen
 from textual.reactive import reactive
 from typing import List, Tuple
@@ -20,29 +21,107 @@ class AppHeader(Container):
         yield Static("v 0.1.0", id="app-version")
 
 
-class TradingPairsList(Container):
+class Pools(Container):
     """Left panel showing trading pairs"""
+
     def __init__(self):
         super().__init__(id="trading-pairs-panel")
+        self.search_visible = False
+        self.all_pools = []
     
     def compose(self) -> ComposeResult:
-        yield Label("Trading Pairs", id="pairs-title")
-        yield ListView(id="pairs-list")
+        with Vertical():
+            yield Input(placeholder="Search pools...", id="pools-search", classes="hidden")
+            yield DataTable(id="pools-table")
     
     def on_mount(self) -> None:
-        pairs_data = [
-            ("SolMTC / xSolMTC", "-$27,402.85", "-$13.74", "-$7,855,711.14", "2.2889%"),
-            ("WETH / weTH", "-$148,605.07", "-$29.72", "-$6,555,101.58", "13.21%"),
-            ("sTETH / WETH", "-$258,599.28", "-$129.29", "-$3,862,016.7", "7.49145%"),
-            ("WETH / LSK", "-$138,738.18", "-$416.21", "-$3,833,273.06", "1.15353%"),
-            ("USDTO / USDC-e", "-$107,258.28", "-$10.72", "-$3,611,322.83", "4.11165%"),
-            ("wstETH / WETH", "-$2,168,703.72", "-$195.18", "-$2,850,446.8", "6.64301%"),
-            ("USDC / STG", "-$71,281.57", "-$213.84", "-$2,841,479.04", "5.03788%"),
-        ]
+        table = self.query_one("#pools-table", DataTable)
+        table.add_columns("Pool", "TVL", "APR")
+        table.loading = True
+    
+    
+    def toggle_search(self) -> None:
+        """Toggle search bar visibility"""
+        search_input = self.query_one("#pools-search", Input)
+        if self.search_visible:
+            search_input.add_class("hidden")
+            self.search_visible = False
+            # Clear search and show all pools
+            search_input.value = ""
+            self.update_table_with_pools(self.all_pools)
+            # Focus back to table
+            self.query_one("#pools-table", DataTable).focus()
+        else:
+            search_input.remove_class("hidden")
+            self.search_visible = True
+            search_input.focus()
+    
+    def on_input_changed(self, event) -> None:
+        """Handle search input changes"""
+        if event.input.id == "pools-search":
+            query = event.value
+            if query:
+                app_state = self.app.state
+                filtered_pools = app_state.filter_pools(self.all_pools, query)
+                self.update_table_with_pools(filtered_pools)
+            else:
+                self.update_table_with_pools(self.all_pools)
+    
+    def on_key(self, event) -> None:
+        """Handle key events"""
+        if event.key == "escape" and self.search_visible:
+            # Clear search and exit search mode
+            self.toggle_search()
+            event.stop()
+    
+    def update_table_with_pools(self, pools) -> None:
+        """Update DataTable with given pools"""
+        table = self.query_one("#pools-table", DataTable)
+        table.clear()
         
-        pairs_list = self.query_one("#pairs-list", ListView)
-        for pair_data in pairs_data:
-            pairs_list.append(ListItem(Label(f"{pair_data[0]}")))
+        for pool in pools:
+            # Extract pool information
+            chain_name = pool.chain_name
+            token_a = pool.token0.symbol if pool.token0 else 'N/A'
+            token_b = pool.token1.symbol if pool.token1 else 'N/A'
+            
+            # Calculate TVL from reserves
+            tvl = 0
+            if pool.reserve0 and pool.reserve1:
+                try:
+                    tvl = float(pool.reserve0.amount) + float(pool.reserve1.amount)
+                except (ValueError, AttributeError):
+                    tvl = 0
+
+            table.add_row(
+                f"[{chain_name}] {token_a} / {token_b}",
+                f"${tvl:,.2f}" if tvl > 0 else "N/A",
+                f"{pool.pool_fee:.2f}%" if pool.pool_fee else "N/A"
+            )
+    
+    @work(exclusive=True)
+    async def load_pool_data(self) -> None:
+        """Update the DataTable with pools data"""
+        try:
+            table = self.query_one("#pools-table", DataTable)
+            table.loading = True
+            table.clear()
+
+            app_state = self.app.state
+            pools = await app_state.load_pools()
+            self.all_pools = pools  # Store all pools for filtering
+
+            self.update_table_with_pools(pools)
+        except Exception as e:
+            self.show_error(str(e))
+        finally:
+            table.loading = False
+            # Set focus on the DataTable after pools are loaded
+            table.focus()
+    
+    def show_error(self, error: str) -> None:
+        """Show error message"""
+        self.app.notify(f"Error loading pools: {error}")
         
 
 class PoolDetailsView(Container):
@@ -57,7 +136,7 @@ class TradingInterface(Container):
     """Main trading interface layout"""
     def compose(self) -> ComposeResult:
         with Horizontal(id="main-trading-area"):
-            yield TradingPairsList()
+            yield Pools()
             yield PoolDetailsView()
 
 class ChainSelectionScreen(ModalScreen):
@@ -86,6 +165,7 @@ class DromadaireApp(App):
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
         ("c", "show_chain_selection", "Select chains"),
+        ("s", "toggle_search", "Toggle search"),
         ("q", "quit", "Quit"),
     ]
     
@@ -98,7 +178,8 @@ class DromadaireApp(App):
     def __init__(self):
         super().__init__()
         self.state = state()
-        # Set default selected chains
+    
+    def on_mount(self) -> None:
         self.selected_chains = self.state.default_chains.copy()
 
     def compose(self) -> ComposeResult:
@@ -117,10 +198,17 @@ class DromadaireApp(App):
         def handle_chain_selection(selected_chains): self.selected_chains = self.state.select_chains(selected_chains)
         self.push_screen(ChainSelectionScreen(selected_chains=self.selected_chains, supported_chains=self.state.supported_chains), handle_chain_selection)
     
-    def watch_selected_chains(self, chains: List[Tuple[str, str]]) -> None:
+    def action_toggle_search(self) -> None:
+        """Toggle search bar visibility in pools."""
+        pools_widget = self.query_one(Pools)
+        pools_widget.toggle_search()
+    
+    async def watch_selected_chains(self, chains: List[Tuple[str, str]]) -> None:
         """Called when selected_chains changes"""
         # Sync with app state
         if chains:
             self.notify(f"Selected chains: {', '.join([chain_name for _, chain_name in chains])}")
+            pools_widget = self.query_one(Pools)
+            pools_widget.load_pool_data()
         else:
             self.notify("No chains selected")
