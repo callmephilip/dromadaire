@@ -23,6 +23,9 @@ class AppHeader(Container):
 
 class Pools(Container):
     """Left panel showing trading pairs"""
+    
+    
+    
     def __init__(self):
         super().__init__(id="trading-pairs-panel")
     
@@ -31,20 +34,20 @@ class Pools(Container):
     
     def on_mount(self) -> None:
         table = self.query_one("#pools-table", DataTable)
-        table.add_columns("Pool", "Chain", "Token A", "Token B", "TVL", "APR")
+        table.add_columns("Pool", "TVL", "APR")
         table.loading = True
     
     @work(exclusive=True)
     async def load_pool_data(self) -> None:
         """Update the DataTable with pools data"""
         try:
+            table = self.query_one("#pools-table", DataTable)
+            table.loading = True
+            table.clear()
+
             app_state = self.app.state
             pools = await app_state.load_pools()
-            
-            table = self.query_one("#pools-table", DataTable)
-            table.clear()
-            table.loading = False
-            
+
             for pool in pools:
                 # Extract pool information
                 chain_name = pool.chain_name
@@ -58,24 +61,20 @@ class Pools(Container):
                         tvl = float(pool.reserve0.amount) + float(pool.reserve1.amount)
                     except (ValueError, AttributeError):
                         tvl = 0
-                
-                pool_name = f"{token_a} / {token_b}"
-                
+
                 table.add_row(
-                    pool_name,
-                    chain_name,
-                    token_a,
-                    token_b,
+                    f"[{chain_name}] {token_a} / {token_b}",
                     f"${tvl:,.2f}" if tvl > 0 else "N/A",
                     f"{pool.pool_fee:.2f}%" if pool.pool_fee else "N/A"
                 )
         except Exception as e:
             self.show_error(str(e))
+        finally:
+            table.loading = False
     
     def show_error(self, error: str) -> None:
         """Show error message"""
         table = self.query_one("#pools-table", DataTable)
-        table.loading = False
         self.app.notify(f"Error loading pools: {error}")
         
 

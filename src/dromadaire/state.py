@@ -36,7 +36,21 @@ class AppState:
     def select_chains(self, chains: List[str]) -> List[Tuple[str, str]]:
         """Update selected chains"""
         self._selected_chains = [(chain_id, chain_name) for chain_id, chain_name in self.supported_chains if chain_id in chains]
-        self.chains = [get_async_chain(chain_id) for chain_id, _ in self.selected_chains]
+        
+        # Create a mapping of existing chains by chain_id
+        existing_chains = {chain.chain_id: chain for chain in self.chains}
+        
+        # Build new chains list, preserving existing instances where possible
+        new_chains = []
+        for chain_id, _ in self.selected_chains:
+            if chain_id in existing_chains:
+                # Preserve existing chain instance
+                new_chains.append(existing_chains[chain_id])
+            else:
+                # Create new chain instance
+                new_chains.append(get_async_chain(chain_id))
+        
+        self.chains = new_chains
         return self.selected_chains
 
     async def load_pools(self) -> List[LiquidityPool]:
