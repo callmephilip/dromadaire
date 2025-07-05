@@ -5,7 +5,7 @@ Screen {
 }
 
 AppHeader {
-    background: $primary;
+    /*background: $primary;*/
     color: $text;
     dock: top;
     height: 1;
@@ -13,22 +13,23 @@ AppHeader {
 
 #trading-pairs-panel {
     background: $surface;
-    width: 80%;
-    border-right: solid $primary;
+    width: 75%;
+    /* border-right: solid $primary; */
 }
 
 #pool-details-view {
     background: $panel;
-    width: 20%;
+    width: 25%;
 }
 
 #chain-selection-modal {
     background: $surface;
     border: solid $primary;
     width: 60%;
-    height: 70%;
-    margin: 2;
-    padding: 2;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    content-align: center middle;
 }
 
 #chain-selection-title {
@@ -43,6 +44,7 @@ AppHeader {
     text-align: center;
     color: $text-muted;
     margin-top: 1;
+    width: 100%;
 }
 
 .hidden {
