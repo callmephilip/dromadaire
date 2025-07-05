@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from textual import work
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Static, Label, DataTable, SelectionList, Input
+from .widgets import AddressWidget
 from textual.containers import Horizontal, Container, Vertical
 from textual.screen import ModalScreen
 from textual.reactive import reactive
@@ -36,7 +37,7 @@ class Pools(Container):
     
     def on_mount(self) -> None:
         table = self.query_one("#pools-table", DataTable)
-        table.add_columns("Pool", "TVL", "APR")
+        table.add_columns("Pool", "TVL", "APR", "LP Address")
         table.loading = True
     
     
@@ -93,10 +94,15 @@ class Pools(Container):
                 except (ValueError, AttributeError):
                     tvl = 0
 
+            # Get LP address and format it
+            lp_address = getattr(pool, 'lp', '') or getattr(pool, 'address', '')
+            formatted_lp = AddressWidget().format_address(lp_address) if lp_address else "N/A"
+            
             table.add_row(
                 f"[{chain_name}] {token_a} / {token_b}",
                 f"${tvl:,.2f}" if tvl > 0 else "N/A",
-                f"{pool.pool_fee:.2f}%" if pool.pool_fee else "N/A"
+                f"{pool.pool_fee:.2f}%" if pool.pool_fee else "N/A",
+                formatted_lp
             )
     
     @work(exclusive=True)
