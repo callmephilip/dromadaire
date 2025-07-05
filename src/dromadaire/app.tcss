@@ -21,3 +21,26 @@ AppHeader {
     background: $panel;
     width: 20%;
 }
+
+#chain-selection-modal {
+    background: $surface;
+    border: solid $primary;
+    width: 60%;
+    height: 70%;
+    margin: 2;
+    padding: 2;
+}
+
+#chain-selection-title {
+    text-align: center;
+    background: $primary;
+    color: $text;
+    padding: 1;
+    margin-bottom: 1;
+}
+
+#chain-selection-help {
+    text-align: center;
+    color: $text-muted;
+    margin-top: 1;
+}

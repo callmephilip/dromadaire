@@ -1,7 +1,12 @@
 from dotenv import load_dotenv
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Static, Label, ListView, ListItem
+from textual.widgets import Footer, Static, Label, ListView, ListItem, SelectionList
 from textual.containers import Horizontal, Container
+from textual.screen import ModalScreen
+from textual.reactive import reactive
+from typing import List, Optional
+from .data import get_supported_chains
+from .state import AppState
 
 # Load environment variables from .env file
 load_dotenv()
@@ -58,19 +63,46 @@ class TradingInterface(Container):
             yield TradingPairsList()
             yield PoolDetailsView()
 
+class ChainSelectionScreen(ModalScreen):
+    """Modal screen for chain selection"""
+    
+    def compose(self) -> ComposeResult:
+        with Container(id="chain-selection-modal"):
+            yield Label("Select Chains", id="chain-selection-title")
+            selection_list = SelectionList[str]()
+            for chain_id, chain_name in get_supported_chains():
+                selection_list.add_option((chain_name, chain_id))
+            yield selection_list
+            yield Label("Press Enter to confirm, Escape to cancel", id="chain-selection-help")
+    
+    def on_key(self, event) -> None:
+        if event.key == "enter":
+            selection_list = self.query_one(SelectionList)
+            selected_chains = selection_list.selected
+            self.dismiss(selected_chains)
+        elif event.key == "escape":
+            self.dismiss([])
+
 class DromadaireApp(App):
     """Main trading application"""
     
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
+        ("c", "show_chain_selection", "Select chains"),
         ("q", "quit", "Quit"),
     ]
     
     TITLE = "Dromadaire"
     CSS_PATH = "app.tcss"
     
+    # Global reactive state
+    selected_chains: reactive[List[str]] = reactive([])
+    current_trading_pair: reactive[Optional[str]] = reactive(None)
+    connection_status: reactive[bool] = reactive(False)
+    
     def __init__(self):
         super().__init__()
+        self.state = AppState()
     
     def compose(self) -> ComposeResult:
         yield AppHeader()
@@ -82,3 +114,51 @@ class DromadaireApp(App):
         self.theme = (
             "textual-dark" if self.theme == "textual-light" else "textual-light"
         )
+    
+    def action_show_chain_selection(self) -> None:
+        """Show the chain selection modal."""
+        def handle_chain_selection(selected_chains):
+            if selected_chains:
+                # Update both reactive state and app state
+                self.selected_chains = selected_chains
+                self.state.selected_chains = selected_chains
+                # Get chain names for notification
+                chain_names = self.state.get_selected_chain_names()
+                self.notify(f"Selected chains: {', '.join(chain_names)}")
+            else:
+                self.selected_chains = []
+                self.state.selected_chains = []
+                self.notify("No chains selected")
+        
+        self.push_screen(ChainSelectionScreen(), handle_chain_selection)
+    
+    def watch_selected_chains(self, chains: List[str]) -> None:
+        """Called when selected_chains changes"""
+        # Sync with app state
+        self.state.selected_chains = chains
+        # Update any UI components that depend on selected chains
+        self.refresh_trading_data()
+        
+    def watch_current_trading_pair(self, pair: Optional[str]) -> None:
+        """Called when trading pair selection changes"""
+        # Update pool details when trading pair changes
+        self.update_pool_details(pair)
+        
+    def watch_connection_status(self, status: bool) -> None:
+        """Called when connection status changes"""
+        if status:
+            self.notify("Connected to blockchain")
+        else:
+            self.notify("Disconnected from blockchain")
+    
+    def refresh_trading_data(self) -> None:
+        """Refresh trading data based on selected chains"""
+        # Get trading pairs for selected chains
+        # trading_pairs = self.state.get_trading_pairs_for_chains(self.selected_chains)
+        # TODO: Update trading pairs list UI
+        
+    def update_pool_details(self, pair: Optional[str]) -> None:
+        """Update pool details view for selected trading pair"""
+        if pair:
+            # TODO: Fetch and display pool details for the selected pair
+            pass
