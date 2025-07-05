@@ -1,7 +1,10 @@
+from dotenv import load_dotenv
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Static, Label, ListView, ListItem
 from textual.containers import Horizontal, Container
 
+# Load environment variables from .env file
+load_dotenv()
 
 class AppHeader(Container):
     """Header component for trading app"""
@@ -65,6 +68,9 @@ class DromadaireApp(App):
     
     TITLE = "Dromadaire"
     CSS_PATH = "app.tcss"
+    
+    def __init__(self):
+        super().__init__()
     
     def compose(self) -> ComposeResult:
         yield AppHeader()

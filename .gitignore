@@ -15,3 +15,6 @@ playwright/
 
 # snapshot reports
 snapshot_report.html
+
+# env files
+.env
