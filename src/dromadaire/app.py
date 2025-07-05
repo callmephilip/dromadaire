@@ -23,9 +23,7 @@ class AppHeader(Container):
 
 class Pools(Container):
     """Left panel showing trading pairs"""
-    
-    
-    
+
     def __init__(self):
         super().__init__(id="trading-pairs-panel")
     
@@ -71,10 +69,11 @@ class Pools(Container):
             self.show_error(str(e))
         finally:
             table.loading = False
+            # Set focus on the DataTable after pools are loaded
+            table.focus()
     
     def show_error(self, error: str) -> None:
         """Show error message"""
-        table = self.query_one("#pools-table", DataTable)
         self.app.notify(f"Error loading pools: {error}")
         
 
