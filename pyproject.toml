@@ -23,3 +23,15 @@ app = "dromadaire.__main__:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/dromadaire"]
+
+[dependency-groups]
+dev = [
+    "gitingest>=0.1.5",
+]
+
+[tool.ruff]
+exclude = ["kb"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--ignore=kb"

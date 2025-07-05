@@ -1,65 +1,23 @@
-/* Dromadaire App Styles - Desert Camel Theme */
+/* Simple standard theme */
 
-/* Top Bar Styles */
-#top-bar {
+Screen {
+    background: $background;
+}
+
+AppHeader {
+    background: $primary;
+    color: $text;
     dock: top;
     height: 1;
-    background: #8B4513;
-    color: #F4E4BC;
 }
 
-#app-title {
-    width: 15%;
-    text-align: left;
-    color: #FFEAA7;
-    text-style: bold;
-    padding: 0 1;
+#trading-pairs-panel {
+    background: $surface;
+    width: 80%;
+    border-right: solid $primary;
 }
 
-#status-text {
-    width: 70%;
-    text-align: center;
-    color: #F4E4BC;
-    text-style: bold;
-}
-
-#version-text {
-    width: 15%;
-    text-align: right;
-    color: #D2B48C;
-    padding: 0 1;
-    text-overflow: ellipsis;
-}
-
-/* Logo styles */
-#logo {
-    content-align: center middle;
-    background: #654321;
-}
-
-/* Dark theme adjustments */
-.textual-dark {
-    background: #654321;
-}
-
-/* Light theme adjustments */
-.textual-light #top-bar {
-    background: #DEB887;
-    color: #8B4513;
-}
-
-.textual-light #app-title {
-    color: #A0522D;
-}
-
-.textual-light #status-text {
-    color: #8B4513;
-}
-
-.textual-light #help-text {
-    color: #CD853F;
-}
-
-.textual-light #logo {
-    background: #F5DEB3;
+#pool-details-view {
+    background: $panel;
+    width: 20%;
 }

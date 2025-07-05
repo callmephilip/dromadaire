@@ -1,0 +1,6 @@
+[
+  {
+    "gh": "https://github.com/charles-001/dolphie",
+    "include_patterns": ["dolphie/**/*.py", "dolphie/**/*.tcss"]
+  }
+]

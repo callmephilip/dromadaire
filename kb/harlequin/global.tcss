@@ -1,0 +1,79 @@
+
+* {
+    scrollbar-background: $background-lighten-1;
+    scrollbar-background-hover: $background-lighten-1;
+    scrollbar-background-active: $background-lighten-1;
+    scrollbar-corner-color: $background-lighten-1;
+    
+    scrollbar-color: $panel;
+    scrollbar-color-hover: $primary;
+    scrollbar-color-active: $secondary;
+}
+
+/* NOTIFICATIONS */
+
+Toast {
+    width: auto;
+    background: $background;
+    tint: white 0%;
+    color: $text;
+    border-right: none;
+    border-left: wide $primary;
+    padding: 0 1;
+    margin: 0 0 1 0;
+}
+
+Toast.-information {
+    border-right: none;
+    border-left: wide $primary;
+}
+
+
+Toast.-warning {
+    border-right: none;
+    border-left: wide $secondary;
+}
+
+Toast.-error {
+    border-right: none;
+    border-left: wide $error;
+}
+
+Toast .toast--title {
+    color: $primary;
+}
+
+/* FOOTER */
+Footer {
+    background: $background;
+    color: $secondary;
+}
+
+Footer:disabled {
+    width: 0;
+    height: 0;
+    padding: 0 0;
+    border: none;
+}
+
+FooterKey {
+    text-style: none;
+    background: $background;
+    color: $primary;
+    .footer-key--key {
+        color: $secondary;
+        background: $background;
+        text-style: bold;
+    }
+    .footer-key--description {
+        padding: 0 1 0 0;
+        color: $primary;
+        background: $background;
+    }
+    &:hover {
+        background: $boost;
+        .footer-key--key {
+            background: $boost;
+        }
+    }
+}
