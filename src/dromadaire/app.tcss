@@ -1,101 +1,23 @@
-/* Dromadaire Trading App Styles */
+/* Simple standard theme */
 
 Screen {
-    layout: vertical;
+    background: $background;
 }
 
-/* App Header */
 AppHeader {
+    background: $primary;
+    color: $text;
     dock: top;
     height: 1;
-    background: $warning;
-    layout: horizontal;
-    padding: 0 1;
 }
 
-#app-name {
-    width: 1fr;
-    text-align: left;
-    color: $text;
-    text-style: bold;
-}
-
-#app-version {
-    width: auto;
-    text-align: right;
-    color: $text-muted;
-    text-style: dim;
-}
-
-/* Main Trading Interface */
-TradingInterface {
-    height: 1fr;
-    background: $background;
-}
-
-#main-trading-area {
-    layout: horizontal;
-    height: 1fr;
-}
-
-/* Trading Pairs Panel */
 #trading-pairs-panel {
-    width: 60%;
-    border-right: tall $border;
     background: $surface;
-    padding: 1;
+    width: 80%;
+    border-right: solid $primary;
 }
 
-#pairs-title {
-    color: $text;
-    text-style: bold;
-    margin-bottom: 1;
-}
-
-#pairs-list {
-    height: 1fr;
-    background: $surface;
-}
-
-/* Deposit Form Panel */
 #pool-details-view {
-    width: 40%;
-    background: $surface;
-    padding: 1;
-}
-
-#deposit-title {
-    color: $text;
-    text-style: bold;
-    margin-bottom: 1;
-}
-
-#selected-pair {
-    color: $accent;
-    text-style: bold;
-    margin-bottom: 1;
-}
-
-#price-range-label, #deposit-amount-label {
-    color: $text-muted;
-    margin-top: 1;
-    margin-bottom: 1;
-}
-
-
-/* Footer */
-Footer {
-    dock: bottom;
-    height: 1;
-    /*background: $primary;*/
-}
-
-/* Dark theme adjustments */
-.textual-dark {
-    background: $background;
-}
-
-/* Light theme adjustments */
-.textual-light {
-    background: $background;
+    background: $panel;
+    width: 20%;
 }
