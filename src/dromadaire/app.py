@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
+from textual import work
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Static, Label, ListView, ListItem, SelectionList
+from textual.widgets import Footer, Static, Label, DataTable, SelectionList
 from textual.containers import Horizontal, Container
 from textual.screen import ModalScreen
 from textual.reactive import reactive
@@ -20,29 +21,62 @@ class AppHeader(Container):
         yield Static("v 0.1.0", id="app-version")
 
 
-class TradingPairsList(Container):
+class Pools(Container):
     """Left panel showing trading pairs"""
     def __init__(self):
         super().__init__(id="trading-pairs-panel")
     
     def compose(self) -> ComposeResult:
-        yield Label("Trading Pairs", id="pairs-title")
-        yield ListView(id="pairs-list")
+        yield DataTable(id="pools-table")
     
     def on_mount(self) -> None:
-        pairs_data = [
-            ("SolMTC / xSolMTC", "-$27,402.85", "-$13.74", "-$7,855,711.14", "2.2889%"),
-            ("WETH / weTH", "-$148,605.07", "-$29.72", "-$6,555,101.58", "13.21%"),
-            ("sTETH / WETH", "-$258,599.28", "-$129.29", "-$3,862,016.7", "7.49145%"),
-            ("WETH / LSK", "-$138,738.18", "-$416.21", "-$3,833,273.06", "1.15353%"),
-            ("USDTO / USDC-e", "-$107,258.28", "-$10.72", "-$3,611,322.83", "4.11165%"),
-            ("wstETH / WETH", "-$2,168,703.72", "-$195.18", "-$2,850,446.8", "6.64301%"),
-            ("USDC / STG", "-$71,281.57", "-$213.84", "-$2,841,479.04", "5.03788%"),
-        ]
-        
-        pairs_list = self.query_one("#pairs-list", ListView)
-        for pair_data in pairs_data:
-            pairs_list.append(ListItem(Label(f"{pair_data[0]}")))
+        table = self.query_one("#pools-table", DataTable)
+        table.add_columns("Pool", "Chain", "Token A", "Token B", "TVL", "APR")
+        table.loading = True
+    
+    @work(exclusive=True)
+    async def load_pool_data(self) -> None:
+        """Update the DataTable with pools data"""
+        try:
+            app_state = self.app.state
+            pools = await app_state.load_pools()
+            
+            table = self.query_one("#pools-table", DataTable)
+            table.clear()
+            table.loading = False
+            
+            for pool in pools:
+                # Extract pool information
+                chain_name = pool.chain_name
+                token_a = pool.token0.symbol if pool.token0 else 'N/A'
+                token_b = pool.token1.symbol if pool.token1 else 'N/A'
+                
+                # Calculate TVL from reserves
+                tvl = 0
+                if pool.reserve0 and pool.reserve1:
+                    try:
+                        tvl = float(pool.reserve0.amount) + float(pool.reserve1.amount)
+                    except (ValueError, AttributeError):
+                        tvl = 0
+                
+                pool_name = f"{token_a} / {token_b}"
+                
+                table.add_row(
+                    pool_name,
+                    chain_name,
+                    token_a,
+                    token_b,
+                    f"${tvl:,.2f}" if tvl > 0 else "N/A",
+                    f"{pool.pool_fee:.2f}%" if pool.pool_fee else "N/A"
+                )
+        except Exception as e:
+            self.show_error(str(e))
+    
+    def show_error(self, error: str) -> None:
+        """Show error message"""
+        table = self.query_one("#pools-table", DataTable)
+        table.loading = False
+        self.app.notify(f"Error loading pools: {error}")
         
 
 class PoolDetailsView(Container):
@@ -57,7 +91,7 @@ class TradingInterface(Container):
     """Main trading interface layout"""
     def compose(self) -> ComposeResult:
         with Horizontal(id="main-trading-area"):
-            yield TradingPairsList()
+            yield Pools()
             yield PoolDetailsView()
 
 class ChainSelectionScreen(ModalScreen):
@@ -98,7 +132,8 @@ class DromadaireApp(App):
     def __init__(self):
         super().__init__()
         self.state = state()
-        # Set default selected chains
+    
+    def on_mount(self) -> None:
         self.selected_chains = self.state.default_chains.copy()
 
     def compose(self) -> ComposeResult:
@@ -117,10 +152,12 @@ class DromadaireApp(App):
         def handle_chain_selection(selected_chains): self.selected_chains = self.state.select_chains(selected_chains)
         self.push_screen(ChainSelectionScreen(selected_chains=self.selected_chains, supported_chains=self.state.supported_chains), handle_chain_selection)
     
-    def watch_selected_chains(self, chains: List[Tuple[str, str]]) -> None:
+    async def watch_selected_chains(self, chains: List[Tuple[str, str]]) -> None:
         """Called when selected_chains changes"""
         # Sync with app state
         if chains:
             self.notify(f"Selected chains: {', '.join([chain_name for _, chain_name in chains])}")
+            pools_widget = self.query_one(Pools)
+            pools_widget.load_pool_data()
         else:
             self.notify("No chains selected")

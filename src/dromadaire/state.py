@@ -1,7 +1,7 @@
 import asyncio
 from typing import List, Tuple
 from sugar import get_async_chain
-from sugar.pool import Pool
+from sugar.pool import LiquidityPool
 
 class AppState:
     """Centralized state management for Dromadaire"""
@@ -39,11 +39,14 @@ class AppState:
         self.chains = [get_async_chain(chain_id) for chain_id, _ in self.selected_chains]
         return self.selected_chains
 
-    async def load_pools(self) -> List[Pool]:
+    async def load_pools(self) -> List[LiquidityPool]:
         """Load pools from all selected chains concurrently"""
-        pool_tasks = [chain.get_pools() for chain in self.chains]
-        pools_results = await asyncio.gather(*pool_tasks)
-        return [pool for pools in pools_results for pool in pools]
+        all_pools = []
+        for chain in self.chains:
+            async with chain:
+                pools = await chain.get_pools()
+                all_pools.extend(pools)
+        return all_pools
 
 
 def state() -> 'AppState':
