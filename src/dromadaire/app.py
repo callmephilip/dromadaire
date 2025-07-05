@@ -95,9 +95,15 @@ class DromadaireApp(App):
     TITLE = "Dromadaire"
     CSS_PATH = "app.tcss"
     
+    # Global reactive state
+    selected_chains: reactive[List[Tuple[str, str]]] = reactive([])
+
     def __init__(self):
         super().__init__()
-    
+        self.state = AppState()
+        # Set default selected chains
+        self.selected_chains = self.state.default_chains.copy()
+
     def compose(self) -> ComposeResult:
         yield AppHeader()
         yield TradingInterface()
