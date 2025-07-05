@@ -1,5 +1,8 @@
 # Running project
 
+- this project uses `uv` to manage dependencies, run commands etc:
+  - Claude must add dependencies using uv
+  - Claude must run `uv pip install -e .`
 - use `nohup textual serve src/dromadaire/__main__.py > /dev/null 2>&1 &` which will load the app in the browser in the background, don't wait for the command to complete, move on to the next step
 - navigate to http://localhost:8000 to see the browser version of the app
 

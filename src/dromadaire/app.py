@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Static, Button, Input, Label, ListView, ListItem
+from textual.widgets import Footer, Static, Label, ListView, ListItem
 from textual.containers import Horizontal, Container
 
 

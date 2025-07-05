@@ -1,4 +1,3 @@
-import pytest
 from dromadaire.app import DromadaireApp
 
 
