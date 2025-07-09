@@ -14,32 +14,15 @@ load_dotenv()
 
 class AppHeader(Container):
     """Header component for trading app"""
-    def __init__(self):
+    def __init__(self, wallet_address: str = ""):
         super().__init__(id="app-header")
+        self.wallet_address = wallet_address
+        print(f">>>>>>>>>>>>>>>>>>>>>. Wallet address: {self.wallet_address}")
     
     def compose(self) -> ComposeResult:
         yield Label(" 🐪 dromadaire", id="app-name")
         yield Label("v 0.1.0", id="app-version")
-        yield Label("", id="wallet-address")
-    
-    def on_mount(self) -> None:
-        """Update wallet address when component mounts"""
-        self.update_wallet_display()
-    
-    def update_wallet_display(self) -> None:
-        """Update wallet address display"""
-        wallet_label = self.query_one("#wallet-address", Label)
-        try:
-            wallet_address = self.app.state.wallet_address
-            if wallet_address:
-                # Format address to show first 6 and last 4 characters
-                formatted_address = f"{wallet_address[:6]}...{wallet_address[-4:]}"
-                wallet_label.update(formatted_address)
-            else:
-                wallet_label.update("no wallet")
-        except Exception:
-            # If there's any error getting wallet address, show no wallet
-            wallet_label.update("no wallet")
+        yield AddressWidget(address=self.wallet_address, id="wallet-address") if self.wallet_address else Label("No wallet connected", id="wallet-address") 
 
 
 class Pools(Container):
@@ -278,7 +261,7 @@ class DromadaireApp(App):
         self.selected_chains = self.state.default_chains.copy()
 
     def compose(self) -> ComposeResult:
-        yield AppHeader()
+        yield AppHeader(wallet_address=self.state.wallet_address)
         yield TradingInterface()
         yield Footer()
     
