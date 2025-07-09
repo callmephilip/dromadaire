@@ -1,6 +1,8 @@
 import asyncio
+from typing import Optional
 from dataclasses import dataclass
-from sugar import AsyncChain
+from sugar import AsyncChain, CommonChain
+from sugar.chains import Account
 from sugar.token import Token
 from sugar import get_async_chain
 from sugar.pool import LiquidityPool, Amount
@@ -143,6 +145,14 @@ async def get_token_balances(self: AsyncChain, address=None):
     
     return balances
 
+def get_account(self: CommonChain) -> Optional[Account]:
+    try:
+        return self.account
+    except TypeError:
+        return None
+    
+
 # Add the methods to AsyncChain
 AsyncChain.process_token_batch = process_token_batch
 AsyncChain.get_token_balances = get_token_balances
+CommonChain.get_account = get_account
