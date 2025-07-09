@@ -1,25 +1,32 @@
 from dotenv import load_dotenv
 from textual import work, on
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Static, Label, DataTable, SelectionList, Input
-from .widgets import AddressWidget
+from textual.widgets import Footer, Label, DataTable, SelectionList, Input
+from dromadaire.widgets import AddressWidget
 from textual.containers import Horizontal, Container, Vertical
 from textual.screen import ModalScreen
 from textual.reactive import reactive
 from typing import List, Tuple
-from .state import state
+from dromadaire.state import state
 
 # Load environment variables from .env file
 load_dotenv()
 
 class AppHeader(Container):
     """Header component for trading app"""
-    def __init__(self):
+    def __init__(self, wallet_address: str = ""):
         super().__init__(id="app-header")
+        self.wallet_address = wallet_address
     
     def compose(self) -> ComposeResult:
-        yield Static(" 🐪 dromadaire", id="app-name")
-        yield Static("v 0.1.0", id="app-version")
+        yield Label(" 🐪 dromadaire", id="app-name")
+        yield Label("v 0.1.0", id="app-version")
+        if self.wallet_address:
+            wallet_widget = AddressWidget(address=self.wallet_address, id="wallet-address")
+            yield wallet_widget
+        else:
+            no_wallet_label = Label("No wallet connected", id="wallet-address")
+            yield no_wallet_label 
 
 
 class Pools(Container):
@@ -234,12 +241,77 @@ class ChainSelectionScreen(ModalScreen):
         elif event.key == "escape":
             self.dismiss([])
 
+class WalletScreen(ModalScreen):
+    """Modal screen for wallet balances"""
+    
+    def __init__(self):
+        super().__init__()
+        self.balances = []
+    
+    def compose(self) -> ComposeResult:
+        with Container(id="wallet-modal"):
+            yield Label("💳 Wallet Balances", id="wallet-title")
+            yield Container(id="wallet-content")
+            yield Label("Press Escape to close", id="wallet-help")
+    
+    def on_mount(self) -> None:
+        self.load_balances()
+    
+    @work(exclusive=True)
+    async def load_balances(self) -> None:
+        """Load wallet balances"""
+        content = self.query_one("#wallet-content", Container)
+        
+        # Check if wallet is connected
+        app_state = self.app.state
+        if not app_state.wallet_address:
+            content.mount(Label("No wallet connected"))
+            return
+        
+        # Show loading state
+        content.mount(Label("Loading balances..."))
+        
+        try:
+            # Get balances from state
+            balances = await app_state.get_balances()
+            self.balances = balances
+            
+            # Clear loading message
+            content.remove_children()
+            
+            if not balances:
+                content.mount(Label("No balances found"))
+                return
+            
+            # Create balance table
+            table = DataTable(id="balances-table")
+            table.add_columns("Token", "Balance", "Chain", "Value (USD)")
+            
+            for balance in balances:
+                token_symbol = balance.token.symbol
+                token_balance = f"{balance.balance:,.6f}"
+                chain_name = balance.token.chain_name
+                usd_value = f"${balance.balance_stable:,.2f}" if balance.balance_stable > 0 else "N/A"
+                
+                table.add_row(token_symbol, token_balance, chain_name, usd_value)
+            
+            content.mount(table)
+            
+        except Exception as e:
+            content.remove_children()
+            content.mount(Label(f"Error loading balances: {str(e)}"))
+    
+    def on_key(self, event) -> None:
+        if event.key == "escape":
+            self.dismiss()
+
 class DromadaireApp(App):
     """Main trading application"""
     
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
         ("c", "show_chain_selection", "Select chains"),
+        ("w", "show_wallet", "Show wallet"),
         ("s", "toggle_search", "Toggle search"),
         ("q", "quit", "Quit"),
     ]
@@ -258,7 +330,7 @@ class DromadaireApp(App):
         self.selected_chains = self.state.default_chains.copy()
 
     def compose(self) -> ComposeResult:
-        yield AppHeader()
+        yield AppHeader(wallet_address=self.state.wallet_address)
         yield TradingInterface()
         yield Footer()
     
@@ -272,6 +344,10 @@ class DromadaireApp(App):
         """Show the chain selection modal."""
         def handle_chain_selection(selected_chains): self.selected_chains = self.state.select_chains(selected_chains)
         self.push_screen(ChainSelectionScreen(selected_chains=self.selected_chains, supported_chains=self.state.supported_chains), handle_chain_selection)
+    
+    def action_show_wallet(self) -> None:
+        """Show the wallet modal."""
+        self.push_screen(WalletScreen())
     
     def action_toggle_search(self) -> None:
         """Toggle search bar visibility in pools."""
@@ -287,3 +363,9 @@ class DromadaireApp(App):
             pools_widget.load_pool_data()
         else:
             self.notify("No chains selected")
+    
+    @on(AddressWidget.Clicked)
+    def handle_address_widget_click(self, event: AddressWidget.Clicked) -> None:
+        """Handle clicks on address widgets"""
+        if event.widget.id == "wallet-address":
+            self.action_show_wallet()

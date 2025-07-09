@@ -1,7 +1,7 @@
-from typing import List, Tuple
-from sugar import get_async_chain
-from sugar.pool import LiquidityPool
-from sugar.helpers import normalize_address
+import asyncio
+from typing import List, Tuple, Optional
+from dromadaire.confiture import get_async_chain, get_chain, normalize_address, LiquidityPool, TokenBalance
+
 
 class AppState:
     """Centralized state management for Dromadaire"""
@@ -24,6 +24,16 @@ class AppState:
             ('1135', 'Lisk'),
         ]
     
+    @property
+    def wallet_address(self) -> Optional[str]:
+        """Get the wallet address from the first selected chain's account"""
+        try:
+            with get_chain("10") as chain:
+                account = chain.account
+                return account.address
+        except Exception:
+            return None
+
     @property
     def selected_chains(self) -> List[Tuple[str, str]]:
         """Currently selected chains"""
@@ -61,7 +71,27 @@ class AppState:
                 pools = await chain.get_pools()
                 all_pools.extend(pools)
         return all_pools
-    
+
+    async def get_balances(self) -> List[TokenBalance]:
+        """Get all token balances from all selected chains concurrently"""
+        async def get_chain_balances(chain):
+            async with chain:
+                return await chain.get_token_balances()
+        
+        # Use asyncio.gather to fetch balances from all chains in parallel
+        balance_results = await asyncio.gather(
+            *[get_chain_balances(chain) for chain in self.chains],
+            return_exceptions=True
+        )
+        
+        # Flatten results and filter out exceptions
+        all_balances = []
+        for result in balance_results:
+            if not isinstance(result, Exception):
+                all_balances.extend(result)
+        
+        return all_balances
+
     def filter_pools(self, pools: List[LiquidityPool], query: str) -> List[LiquidityPool]:
         if not query or not query.strip():
             return pools

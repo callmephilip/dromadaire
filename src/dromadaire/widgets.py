@@ -1,5 +1,6 @@
 from textual.widgets import Label
 from textual.reactive import reactive
+from textual.message import Message
 
 
 class AddressWidget(Label):
@@ -7,9 +8,19 @@ class AddressWidget(Label):
     
     address: reactive[str] = reactive("")
     
+    class Clicked(Message):
+        """Message sent when address is clicked"""
+        def __init__(self, widget: "AddressWidget") -> None:
+            super().__init__()
+            self.widget = widget
+    
     def __init__(self, address: str = "", **kwargs):
         super().__init__(**kwargs)
         self.address = address
+    
+    def on_click(self) -> None:
+        """Handle click events"""
+        self.post_message(self.Clicked(self))
     
     def watch_address(self, address: str) -> None:
         """Update the display when address changes"""
