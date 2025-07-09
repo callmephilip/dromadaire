@@ -18,6 +18,8 @@ uv run app
 uv run ruff check
 ```
 
+Logs (open in a separate window): `textual console` while running `textual run --dev src/dromadaire/__main__.py`
+
 Use claude in yolo mode with
 
 ```

@@ -1,6 +1,6 @@
 from unittest.mock import patch, AsyncMock
 from dromadaire.app import DromadaireApp
-from dromadaire.sugar import LiquidityPool, Token, Price, Amount
+from dromadaire.confiture import LiquidityPool, Token, Price, Amount
 
 
 def create_mock_pools():

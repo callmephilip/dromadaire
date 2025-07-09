@@ -1,13 +1,13 @@
 from dotenv import load_dotenv
 from textual import work, on
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Static, Label, DataTable, SelectionList, Input
-from .widgets import AddressWidget
+from textual.widgets import Footer, Label, DataTable, SelectionList, Input
+from dromadaire.widgets import AddressWidget
 from textual.containers import Horizontal, Container, Vertical
 from textual.screen import ModalScreen
 from textual.reactive import reactive
 from typing import List, Tuple
-from .state import state
+from dromadaire.state import state
 
 # Load environment variables from .env file
 load_dotenv()
@@ -18,8 +18,28 @@ class AppHeader(Container):
         super().__init__(id="app-header")
     
     def compose(self) -> ComposeResult:
-        yield Static(" 🐪 dromadaire", id="app-name")
-        yield Static("v 0.1.0", id="app-version")
+        yield Label(" 🐪 dromadaire", id="app-name")
+        yield Label("v 0.1.0", id="app-version")
+        yield Label("", id="wallet-address")
+    
+    def on_mount(self) -> None:
+        """Update wallet address when component mounts"""
+        self.update_wallet_display()
+    
+    def update_wallet_display(self) -> None:
+        """Update wallet address display"""
+        wallet_label = self.query_one("#wallet-address", Label)
+        try:
+            wallet_address = self.app.state.wallet_address
+            if wallet_address:
+                # Format address to show first 6 and last 4 characters
+                formatted_address = f"{wallet_address[:6]}...{wallet_address[-4:]}"
+                wallet_label.update(formatted_address)
+            else:
+                wallet_label.update("no wallet")
+        except Exception:
+            # If there's any error getting wallet address, show no wallet
+            wallet_label.update("no wallet")
 
 
 class Pools(Container):

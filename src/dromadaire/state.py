@@ -1,5 +1,6 @@
-from typing import List, Tuple
-from .sugar import get_async_chain, normalize_address, LiquidityPool
+from typing import List, Tuple, Optional
+from dromadaire.confiture import get_async_chain, get_chain, normalize_address, LiquidityPool
+
 
 class AppState:
     """Centralized state management for Dromadaire"""
@@ -22,6 +23,16 @@ class AppState:
             ('1135', 'Lisk'),
         ]
     
+    @property
+    def wallet_address(self) -> Optional[str]:
+        """Get the wallet address from the first selected chain's account"""
+        try:
+            with get_chain("10") as chain:
+                account = chain.account
+                return account.address
+        except Exception:
+            return None
+
     @property
     def selected_chains(self) -> List[Tuple[str, str]]:
         """Currently selected chains"""
