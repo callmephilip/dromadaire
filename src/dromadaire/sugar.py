@@ -1,17 +1,26 @@
 import asyncio
 from dataclasses import dataclass
-from typing import Optional
-from sugar import AsyncOPChain, AsyncChain
+from sugar import AsyncChain
+from sugar.token import Token
+from sugar import get_async_chain
+from sugar.pool import LiquidityPool, Amount
+from sugar.helpers import normalize_address
+from sugar.price import  Price
+
+get_async_chain, normalize_address, LiquidityPool, Price, Amount
+
 
 @dataclass
 class TokenBalance:
     """Represents a token balance with metadata"""
-    symbol: str
+    token: Token
     balance: float
-    token_address: str
-    decimals: int
-    usd_price: Optional[float] = None
-    usd_value: Optional[float] = None
+    price_stable: float
+    
+    @property
+    def balance_stable(self) -> float:
+        """Computed property for stable currency value"""
+        return self.balance * self.price_stable
 
 # ERC-20 token ABI for balanceOf function
 ERC20_ABI = [
@@ -38,16 +47,13 @@ async def process_token_batch(self, token_batch, address, price_lookup=None):
             balance_wei = await contract.functions.balanceOf(address).call()
             balance = balance_wei / (10 ** token.decimals)
             
-            # Get USD price if available
-            usd_price = price_lookup.get(token.token_address, 0.0) if price_lookup else 0.0
+            # Get stable price if available
+            price_stable = price_lookup.get(token.token_address, 0.0) if price_lookup else 0.0
             
             return TokenBalance(
-                symbol=token.symbol,
+                token=token,
                 balance=balance,
-                token_address=token.token_address,
-                decimals=token.decimals,
-                usd_price=usd_price,
-                usd_value=balance * usd_price
+                price_stable=price_stable
             )
         except Exception:
             return None
@@ -77,9 +83,10 @@ async def get_token_balances(self: AsyncChain, address=None):
         address: The address to check balances for. If None, uses self.account.address
     
     Returns:
-        List of TokenBalance objects with token info and USD values
+        List of TokenBalance objects with token info and stable currency values
     """
-    if address is None: address = self.account.address
+    if address is None:
+        address = self.account.address
     
     balances, tokens = [], await self.get_all_tokens()
     prices = await self.get_prices(tokens)
@@ -94,13 +101,22 @@ async def get_token_balances(self: AsyncChain, address=None):
     # Get ETH balance
     eth_balance = self.web3.from_wei(await self.web3.eth.get_balance(address), 'ether')
     eth_price = price_lookup.get('ETH', 0.0)
-    balances.append(TokenBalance(
-        symbol='ETH',
-        balance=float(eth_balance),
+    
+    # Create a Token object for ETH
+    eth_token = Token(
+        chain_id=self.chain_id,
+        chain_name=self.name,
         token_address='ETH',
+        symbol='ETH',
         decimals=18,
-        usd_price=eth_price,
-        usd_value=float(eth_balance) * eth_price
+        listed=True,
+        wrapped_token_address=None
+    )
+    
+    balances.append(TokenBalance(
+        token=eth_token,
+        balance=float(eth_balance),
+        price_stable=eth_price
     ))
 
     for token in tokens:
@@ -130,42 +146,3 @@ async def get_token_balances(self: AsyncChain, address=None):
 # Add the methods to AsyncChain
 AsyncChain.process_token_batch = process_token_batch
 AsyncChain.get_token_balances = get_token_balances
-
-async def main():
-    async with AsyncOPChain() as chain:
-        address = chain.account.address
-        print(f"Account address: {address}")
-        print("=" * 50)
-        
-        # Now we can use the monkey patched method
-        balances = await chain.get_token_balances()
-
-        print(f"\nFound {len(balances)} tokens with balances:")
-        print("=" * 50)
-        
-        total_usd_value = 0.0
-        for balance in balances:
-            if balance.usd_value and balance.usd_value > 0:
-                print(f"{balance.symbol}: {balance.balance:.6f} (${balance.usd_value:.2f})")
-                total_usd_value += balance.usd_value
-            else:
-                print(f"{balance.symbol}: {balance.balance:.6f}")
-        
-        if total_usd_value > 0:
-            print(f"\nTotal USD Value: ${total_usd_value:.2f}")
-        
-        print("\nDetailed balances:")
-        print("=" * 50)
-        for balance in balances:
-            print(f"Symbol: {balance.symbol}")
-            print(f"Balance: {balance.balance:.6f}")
-            if balance.usd_price:
-                print(f"USD Price: ${balance.usd_price:.6f}")
-                print(f"USD Value: ${balance.usd_value:.2f}")
-            print(f"Token Address: {balance.token_address}")
-            print(f"Decimals: {balance.decimals}")
-            print("-" * 30)
-
-# run the main function
-if __name__ == "__main__":
-    asyncio.run(main())
