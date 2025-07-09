@@ -124,15 +124,11 @@ async def get_token_balances(self: AsyncChain, address=None):
             erc20_tokens.append(token)
             seen_addresses.add(token.token_address)
 
-    print(f"Checking balances for {len(erc20_tokens)} ERC-20 tokens using batch requests...")
-
     # Process tokens in batches
     batch_size = 50  # Adjust based on RPC limits
     
     for i in range(0, len(erc20_tokens), batch_size):
         batch = erc20_tokens[i:i + batch_size]
-        print(f"Processing batch {i//batch_size + 1}/{(len(erc20_tokens) + batch_size - 1)//batch_size}")
-        
         # Process batch using batch_requests
         batch_results = await self.process_token_batch(batch, address, price_lookup)
         
